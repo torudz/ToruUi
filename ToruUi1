@@ -1,8 +1,7 @@
 -- =============================================================================
---  Project: ToruUi (Premium Mobile UI Library)
+--  Project: ToruUi (Premium Mobile UI Library) - FIXED LAYOUT
 --  Repository: https://raw.githubusercontent.com/torudz/ToruUi/refs/heads/main/ToruUi1
 --  Author: Dtrong dz
---  Features: Tabs, Toggle, Slider, Button, Dropdown, Paragraph & Live Resizing!
 -- =============================================================================
 
 local Players = game:GetService("Players")
@@ -35,7 +34,6 @@ local function tween(object, info, properties)
     return t
 end
 
--- Hệ thống kéo thả Menu (Draggable)
 local function makeDraggable(topBar, mainFrame)
     local dragging, dragInput, dragStart, startPos
     topBar.InputBegan:Connect(function(input)
@@ -61,9 +59,6 @@ local function makeDraggable(topBar, mainFrame)
     end)
 end
 
--- ==========================================
--- HỆ THỐNG ĐỔI KÍCH THƯỚC MENU (RESIZE SYSTEM)
--- ==========================================
 local function makeResizable(resizeBtn, mainFrame)
     local resizing, resizeStart, startSize
     resizeBtn.InputBegan:Connect(function(input)
@@ -79,7 +74,6 @@ local function makeResizable(resizeBtn, mainFrame)
     UserInputService.InputChanged:Connect(function(input)
         if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            -- Giới hạn kích thước tối thiểu (Min: 450x250) và tối đa (Max: 800x500) để không vỡ giao diện
             local newWidth = math.clamp(startSize.X.Offset + delta.X, 450, 800)
             local newHeight = math.clamp(startSize.Y.Offset + delta.Y, 250, 500)
             mainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
@@ -87,9 +81,6 @@ local function makeResizable(resizeBtn, mainFrame)
     end)
 end
 
--- ==========================================
--- TẠO CỬA SỔ CHÍNH (CreateWindow)
--- ==========================================
 function ToruUi:CreateWindow(cfg)
     cfg = cfg or {}
     local projectTitle = cfg.Title or "ToruUi Menu"
@@ -116,7 +107,6 @@ function ToruUi:CreateWindow(cfg)
     
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
-    -- Nút Resize đặt ở góc dưới cùng bên phải Menu
     local ResizeBtn = Instance.new("TextButton", MainFrame)
     ResizeBtn.Size = UDim2.new(0, 15, 0, 15)
     ResizeBtn.Position = UDim2.new(1, -15, 1, -15)
@@ -128,7 +118,6 @@ function ToruUi:CreateWindow(cfg)
     ResizeBtn.ZIndex = 20
     makeResizable(ResizeBtn, MainFrame)
 
-    -- Nút nổi bật tắt nhanh
     local ToggleBtn = Instance.new("TextButton")
     ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
     ToggleBtn.Position = UDim2.new(0, 15, 0.2, 0)
@@ -143,7 +132,6 @@ function ToruUi:CreateWindow(cfg)
     Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
     Instance.new("UIStroke", ToggleBtn).Color = Theme.StrokeActive
 
-    -- Topbar
     local TopBar = Instance.new("Frame", MainFrame)
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundTransparency = 1
@@ -178,7 +166,6 @@ function ToruUi:CreateWindow(cfg)
         ToggleBtn.Visible = false
     end)
 
-    -- Sidebar
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.Size = UDim2.new(0, 135, 1, -40)
     Sidebar.Position = UDim2.new(0, 0, 0, 40)
@@ -208,21 +195,20 @@ function ToruUi:CreateWindow(cfg)
         FpsLabel.Text = "FPS: " .. string.format("%.1f", 1 / task.wait())
     end)
 
+    -- ĐÃ FIX: Lùi container chứa Tab xuống thêm để không bị dính vào chữ FPS ở trên
     local TabsContainer = Instance.new("Frame", Sidebar)
-    TabsContainer.Size = UDim2.new(1, 0, 1, -45)
-    TabsContainer.Position = UDim2.new(0, 0, 0, 45)
+    TabsContainer.Size = UDim2.new(1, 0, 1, -60)
+    TabsContainer.Position = UDim2.new(0, 0, 0, 55) -- Đẩy từ vị trí 45 xuống 55
     TabsContainer.BackgroundTransparency = 1
     
-    Instance.new("UIListLayout", TabsContainer).Padding = UDim.new(0, 5)
+    local TabListLayout = Instance.new("UIListLayout", TabsContainer)
+    TabListLayout.Padding = UDim.new(0, 7) -- Tăng khoảng cách giữa các nút Tab (About, Chức năng) lên 7px
 
-    -- ==========================================
-    -- HÀM KHỞI TẠO TAB (CreateTab)
-    -- ==========================================
     function window:CreateTab(tabName)
         local tab = {}
         
         local TabBtn = Instance.new("TextButton", TabsContainer)
-        TabBtn.Size = UDim2.new(0, 110, 0, 26)
+        TabBtn.Size = UDim2.new(0, 110, 0, 28)
         TabBtn.Font = Enum.Font.GothamMedium
         TabBtn.TextSize = 11
         TabBtn.Text = "  " .. tabName
@@ -234,23 +220,28 @@ function ToruUi:CreateWindow(cfg)
         TabStroke.Color = Color3.fromRGB(0,0,0)
 
         local Page = Instance.new("ScrollingFrame", MainFrame)
-        -- Tối ưu hóa kích thước động Scale để co giãn chuẩn theo MainFrame khi Resize
         Page.Size = UDim2.new(1, -150, 1, -70)
-        Page.Position = UDim2.new(0, 138, 0, 40)
+        Page.Position = UDim2.new(0, 138, 0, 45) -- Đẩy nhẹ toàn bộ trang nội dung xuống 45
         Page.BackgroundColor3 = Theme.ContentBg
         Page.BorderSizePixel = 0
         Page.ScrollBarThickness = 2
         Page.ScrollBarImageColor3 = Theme.StrokeInActive
         Page.Visible = false
-        Page.ClipsDescendants = false
+        Page.ClipsDescendants = true
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 10)
 
+        -- ĐÃ FIX: Thêm UIPadding để tạo lề bên trong trang nội dung (Không cho dính sát mép trên/mép trái)
+        local PagePadding = Instance.new("UIPadding", Page)
+        PagePadding.PaddingTop = UDim.new(0, 10)    -- Lùi từ trên đỉnh xuống 10px cực đẹp
+        PagePadding.PaddingLeft = UDim.new(0, 10)   -- Cách lề trái 10px
+        PagePadding.PaddingRight = UDim.new(0, 10)  -- Cách lề phải 10px
+
         local ContentGrid = Instance.new("UIGridLayout", Page)
-        ContentGrid.CellSize = UDim2.new(0, 190, 0, 28)
-        ContentGrid.CellPadding = UDim2.new(0, 10, 0, 6)
+        ContentGrid.CellSize = UDim2.new(0, 190, 0, 32)
+        ContentGrid.CellPadding = UDim2.new(0, 10, 0, 10) -- ĐÃ FIX: Tăng CellPadding Y lên 10px giúp các Paragraph cách đều dòng nhau rõ ràng
 
         ContentGrid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Page.CanvasSize = UDim2.new(0, 0, 0, ContentGrid.AbsoluteContentSize.Y + 15)
+            Page.CanvasSize = UDim2.new(0, 0, 0, ContentGrid.AbsoluteContentSize.Y + 25)
         end)
 
         window.Pages[tabName] = Page
@@ -274,9 +265,6 @@ function ToruUi:CreateWindow(cfg)
         TabBtn.MouseButton1Click:Connect(activate)
         if not window.CurrentTab then activate() window.CurrentTab = tabName end
 
-        -- ==========================================
-        -- THÀNH PHẦN: ADD TOGGLE
-        -- ==========================================
         function tab:AddToggle(text, default, callback)
             callback = callback or function() end
             local Container = Instance.new("Frame", Page)
@@ -284,7 +272,7 @@ function ToruUi:CreateWindow(cfg)
 
             local Box = Instance.new("TextButton", Container)
             Box.Size = UDim2.new(0, 14, 0, 14)
-            Box.Position = UDim2.new(0, 10, 0.5, -7)
+            Box.Position = UDim2.new(0, 5, 0.5, -7)
             Box.BackgroundColor3 = Theme.MainBg
             Box.Text = default and "✓" or ""
             Box.TextColor3 = Color3.fromRGB(150, 180, 220)
@@ -296,8 +284,8 @@ function ToruUi:CreateWindow(cfg)
             Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
 
             local Label = Instance.new("TextLabel", Container)
-            Label.Size = UDim2.new(1, -32, 1, 0)
-            Label.Position = UDim2.new(0, 32, 0, 0)
+            Label.Size = UDim2.new(1, -25, 1, 0)
+            Label.Position = UDim2.new(0, 25, 0, 0)
             Label.BackgroundTransparency = 1
             Label.Text = text
             Label.TextColor3 = Color3.fromRGB(200, 205, 215)
@@ -313,9 +301,6 @@ function ToruUi:CreateWindow(cfg)
             end)
         end
 
-        -- ==========================================
-        -- THÀNH PHẦN: ADD SLIDER
-        -- ==========================================
         function tab:AddSlider(text, min, max, default, callback)
             callback = callback or function() end
             local Container = Instance.new("Frame", Page)
@@ -323,7 +308,7 @@ function ToruUi:CreateWindow(cfg)
 
             local Label = Instance.new("TextLabel", Container)
             Label.Size = UDim2.new(0.6, 0, 0, 12)
-            Label.Position = UDim2.new(0, 10, 0, 2)
+            Label.Position = UDim2.new(0, 5, 0, 2)
             Label.BackgroundTransparency = 1
             Label.Text = text
             Label.TextColor3 = Color3.fromRGB(200, 205, 215)
@@ -342,8 +327,8 @@ function ToruUi:CreateWindow(cfg)
             ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
 
             local SlideBar = Instance.new("TextButton", Container)
-            SlideBar.Size = UDim2.new(1, -20, 0, 4)
-            SlideBar.Position = UDim2.new(0, 10, 0, 18)
+            SlideBar.Size = UDim2.new(1, -10, 0, 4)
+            SlideBar.Position = UDim2.new(0, 5, 0, 18)
             SlideBar.BackgroundColor3 = Theme.MainBg
             SlideBar.Text = ""
             Instance.new("UICorner", SlideBar).CornerRadius = UDim.new(0, 2)
@@ -379,17 +364,14 @@ function ToruUi:CreateWindow(cfg)
             end)
         end
 
-        -- ==========================================
-        -- THÀNH PHẦN: ADD BUTTON
-        -- ==========================================
         function tab:AddButton(text, callback)
             callback = callback or function() end
             local Container = Instance.new("Frame", Page)
             Container.BackgroundTransparency = 1
 
             local Btn = Instance.new("TextButton", Container)
-            Btn.Size = UDim2.new(1, -20, 1, -4)
-            Btn.Position = UDim2.new(0, 10, 0, 2)
+            Btn.Size = UDim2.new(1, -10, 1, -4)
+            Btn.Position = UDim2.new(0, 5, 0, 2)
             Btn.BackgroundColor3 = Theme.TabInActive
             Btn.Text = text
             Btn.TextColor3 = Theme.TextMain
@@ -408,9 +390,6 @@ function ToruUi:CreateWindow(cfg)
             end)
         end
 
-        -- ==========================================
-        -- THÀNH PHẦN: ADD DROPDOWN
-        -- ==========================================
         function tab:AddDropdown(text, list, default, callback)
             list = list or {}
             callback = callback or function() end
@@ -422,8 +401,8 @@ function ToruUi:CreateWindow(cfg)
             Container.ZIndex = 5
 
             local DropBtn = Instance.new("TextButton", Container)
-            DropBtn.Size = UDim2.new(1, -20, 1, -4)
-            DropBtn.Position = UDim2.new(0, 10, 0, 2)
+            DropBtn.Size = UDim2.new(1, -10, 1, -4)
+            DropBtn.Position = UDim2.new(0, 5, 0, 2)
             DropBtn.BackgroundColor3 = Theme.TabInActive
             DropBtn.Text = "  " .. text .. ": " .. currentSelection
             DropBtn.TextColor3 = Color3.fromRGB(200, 205, 215)
@@ -504,34 +483,34 @@ function ToruUi:CreateWindow(cfg)
             end)
         end
 
-        -- ==========================================
-        -- THÀNH PHẦN: ADD PARAGRAPH (KHUNG VĂN BẢN CHÚ THÍCH)
-        -- ==========================================
+        -- ==========================================================
+        -- THÀNH PHẦN: ADD PARAGRAPH (CẬP NHẬT KÍCH THƯỚC PHÙ HỢP CỰC ĐẸP)
+        -- ==========================================================
         function tab:AddParagraph(title, content)
             local Container = Instance.new("Frame", Page)
             Container.BackgroundTransparency = 1
 
             local BgFrame = Instance.new("Frame", Container)
-            BgFrame.Size = UDim2.new(1, -20, 1, -4)
-            BgFrame.Position = UDim2.new(0, 10, 0, 2)
+            BgFrame.Size = UDim2.new(1, -10, 1, -2) -- Căn đều tỷ lệ size co giãn
+            BgFrame.Position = UDim2.new(0, 5, 0, 1)
             BgFrame.BackgroundColor3 = Theme.TabInActive
             Instance.new("UICorner", BgFrame).CornerRadius = UDim.new(0, 6)
             local Stroke = Instance.new("UIStroke", BgFrame)
             Stroke.Color = Theme.StrokeInActive
 
             local PTitle = Instance.new("TextLabel", BgFrame)
-            PTitle.Size = UDim2.new(1, -10, 0, 12)
-            PTitle.Position = UDim2.new(0, 8, 0, 2)
+            PTitle.Size = UDim2.new(1, -16, 0, 14)
+            PTitle.Position = UDim2.new(0, 8, 0, 3)
             PTitle.BackgroundTransparency = 1
             PTitle.Text = title or "Paragraph Title"
             PTitle.TextColor3 = Theme.TextMain
             PTitle.Font = Enum.Font.GothamBold
-            PTitle.TextSize = 10
+            PTitle.TextSize = 10.5
             PTitle.TextXAlignment = Enum.TextXAlignment.Left
 
             local PContent = Instance.new("TextLabel", BgFrame)
-            PContent.Size = UDim2.new(1, -10, 1, -14)
-            PContent.Position = UDim2.new(0, 8, 0, 12)
+            PContent.Size = UDim2.new(1, -16, 1, -18)
+            PContent.Position = UDim2.new(0, 8, 0, 16)
             PContent.BackgroundTransparency = 1
             PContent.Text = content or "Paragraph Content"
             PContent.TextColor3 = Theme.TextDark
@@ -541,30 +520,6 @@ function ToruUi:CreateWindow(cfg)
             PContent.TextYAlignment = Enum.TextYAlignment.Top
             PContent.TextWrapped = true
         end
-
-        ------------------------------------------------------------------------
-        -- CODE KÝ SỰ: HƯỚNG DẪN ÔNG TỰ THÊM PHẦN TỬ MỚI (VÍ DỤ: ADDLABEL)
-        ------------------------------------------------------------------------
-        -- Muốn tạo thêm Element mới nào, ông chỉ cần copy cấu trúc hàm mẫu dưới này:
-        --[[
-        function tab:AddLabel(text)
-            -- 1. Tạo Frame Container để Grid xếp vị trí tự động
-            local Container = Instance.new("Frame", Page)
-            Container.BackgroundTransparency = 1
-
-            -- 2. Tạo Đối tượng hiển thị (TextLabel, ImageLabel, ...)
-            local Label = Instance.new("TextLabel", Container)
-            Label.Size = UDim2.new(1, -20, 1, 0)
-            Label.Position = UDim2.new(0, 10, 0, 0)
-            Label.BackgroundTransparency = 1
-            Label.Text = text
-            Label.TextColor3 = Theme.TextMain
-            Label.Font = Enum.Font.Gotham
-            Label.TextSize = 11
-            Label.TextXAlignment = Enum.TextXAlignment.Left
-        end
-        --]]
-        ------------------------------------------------------------------------
 
         return tab
     end
