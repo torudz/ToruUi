@@ -1,0 +1,432 @@
+-- =============================================================================
+--  Project: Delta-Styled UI Library (Mobile Optimized)
+--  Author: Dtrong dz
+--  Description: A clean, modern UI Library built for developers.
+--  GitHub Repository Ready.
+-- =============================================================================
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local DeltaLib = {}
+DeltaLib.__index = DeltaLib
+
+-- Theme màu sắc mặc định giống Delta Console
+local Theme = {
+	MainBg = Color3.fromRGB(33, 35, 41),
+	ContentBg = Color3.fromRGB(22, 23, 27),
+	TabActive = Color3.fromRGB(43, 52, 66),
+	TabInActive = Color3.fromRGB(26, 28, 33),
+	StrokeActive = Color3.fromRGB(45, 105, 175),
+	StrokeInActive = Color3.fromRGB(50, 54, 65),
+	TextMain = Color3.fromRGB(255, 255, 255),
+	TextDark = Color3.fromRGB(140, 145, 155),
+	Green = Color3.fromRGB(0, 215, 100)
+}
+
+-- Hàm hỗ trợ kéo thả (Draggable) hệ thống
+local function makeDraggable(topBar, mainFrame)
+	local dragging, dragInput, dragStart, startPos
+	topBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = mainFrame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then dragging = false end
+			end)
+		end
+	end)
+	topBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+end
+
+-- ==========================================
+-- TẠO CỬA SỔ CHÍNH (CreateWindow)
+-- ==========================================
+function DeltaLib:CreateWindow(projectTitle, authorName)
+	local window = {
+		CurrentTab = nil,
+		Tabs = {},
+		Pages = {}
+	}
+	
+	-- 1. Khởi tạo ScreenGui
+	local ScreenGui = nil
+	pcall(function()
+		if gethui then ScreenGui = Instance.new("ScreenGui", gethui())
+		else ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui")) end
+	end)
+	ScreenGui.Name = "DeltaLib_" .. math.random(1000, 9999)
+	ScreenGui.ResetOnSpawn = false
+	window.ScreenGui = ScreenGui
+
+	-- 2. Frame chính của Menu
+	local MainFrame = Instance.new("Frame")
+	MainFrame.Name = "MainFrame"
+	MainFrame.Size = UDim2.new(0, 580, 0, 320)
+	MainFrame.Position = UDim2.new(0.5, -290, 0.5, -160)
+	MainFrame.BackgroundColor3 = Theme.MainBg
+	MainFrame.BorderSizePixel = 0
+	MainFrame.ClipsDescendants = true
+	MainFrame.Parent = ScreenGui
+	
+	local MainCorner = Instance.new("UICorner")
+	MainCorner.CornerRadius = UDim.new(0, 14)
+	MainCorner.Parent = MainFrame
+
+	-- 3. Nút nổi Toggle cho di động
+	local ToggleBtn = Instance.new("TextButton")
+	ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
+	ToggleBtn.Position = UDim2.new(0, 15, 0.3, 0)
+	ToggleBtn.BackgroundColor3 = Theme.TabActive
+	ToggleBtn.Text = "Menu"
+	ToggleBtn.TextColor3 = Theme.TextMain
+	ToggleBtn.Font = Enum.Font.GothamBold
+	ToggleBtn.TextSize = 12
+	ToggleBtn.Visible = false
+	ToggleBtn.Parent = ScreenGui
+	makeDraggable(ToggleBtn, ToggleBtn)
+
+	local ToggleCorner = Instance.new("UICorner")
+	ToggleCorner.CornerRadius = UDim.new(1, 0)
+	ToggleCorner.Parent = ToggleBtn
+
+	local ToggleStroke = Instance.new("UIStroke")
+	ToggleStroke.Color = Theme.StrokeActive
+	ToggleStroke.Thickness = 1.5
+	ToggleStroke.Parent = ToggleBtn
+
+	-- 4. Thanh TopBar
+	local TopBar = Instance.new("Frame")
+	TopBar.Size = UDim2.new(1, 0, 0, 40)
+	TopBar.BackgroundTransparency = 1
+	TopBar.Parent = MainFrame
+
+	local TitleLabel = Instance.new("TextLabel")
+	TitleLabel.Size = UDim2.new(1, -60, 1, 0)
+	TitleLabel.Position = UDim2.new(0, 15, 0, 5)
+	TitleLabel.BackgroundTransparency = 1
+	TitleLabel.Text = projectTitle or "Project Title"
+	TitleLabel.TextColor3 = Theme.TextMain
+	TitleLabel.Font = Enum.Font.GothamBold
+	TitleLabel.TextSize = 14
+	TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TitleLabel.Parent = TopBar
+
+	local CloseBtn = Instance.new("TextButton")
+	CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+	CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+	CloseBtn.BackgroundTransparency = 1
+	CloseBtn.Text = "✕"
+	CloseBtn.TextColor3 = Theme.TextDark
+	CloseBtn.Font = Enum.Font.GothamMedium
+	CloseBtn.TextSize = 14
+	CloseBtn.Parent = TopBar
+
+	makeDraggable(TopBar, MainFrame)
+
+	CloseBtn.MouseButton1Click:Connect(function()
+		MainFrame.Visible = false
+		ToggleBtn.Visible = true
+	end)
+	ToggleBtn.MouseButton1Click:Connect(function()
+		MainFrame.Visible = true
+		ToggleBtn.Visible = false
+	end)
+
+	-- 5. Sidebar chứa Tab
+	local Sidebar = Instance.new("Frame")
+	Sidebar.Size = UDim2.new(0, 135, 1, -40)
+	Sidebar.Position = UDim2.new(0, 0, 0, 40)
+	Sidebar.BackgroundTransparency = 1
+	Sidebar.Parent = MainFrame
+
+	local AuthorLabel = Instance.new("TextLabel")
+	AuthorLabel.Size = UDim2.new(1, -20, 0, 18)
+	AuthorLabel.Position = UDim2.new(0, 15, 0, 0)
+	AuthorLabel.BackgroundTransparency = 1
+	AuthorLabel.Text = authorName or "Developer"
+	AuthorLabel.TextColor3 = Theme.TextMain
+	AuthorLabel.Font = Enum.Font.GothamBold
+	AuthorLabel.TextSize = 13
+	AuthorLabel.TextXAlignment = Enum.TextXAlignment.Left
+	AuthorLabel.Parent = Sidebar
+
+	local FpsLabel = Instance.new("TextLabel")
+	FpsLabel.Size = UDim2.new(1, -20, 0, 14)
+	FpsLabel.Position = UDim2.new(0, 15, 0, 18)
+	FpsLabel.BackgroundTransparency = 1
+	FpsLabel.Text = "FPS: --"
+	FpsLabel.TextColor3 = Theme.TextDark
+	FpsLabel.Font = Enum.Font.Gotham
+	FpsLabel.TextSize = 10
+	FpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+	FpsLabel.Parent = Sidebar
+
+	task.spawn(function()
+		local lastTime = os.clock()
+		local frameCount = 0
+		RunService.RenderStepped:Connect(function()
+			frameCount = frameCount + 1
+			local currentTime = os.clock()
+			if currentTime - lastTime >= 1.0 then
+				FpsLabel.Text = "FPS: " .. string.format("%.1f", frameCount / (currentTime - lastTime))
+				frameCount = 0
+				lastTime = currentTime
+			end
+		end)
+	end)
+
+	local TabsContainer = Instance.new("Frame")
+	TabsContainer.Size = UDim2.new(1, 0, 1, -45)
+	TabsContainer.Position = UDim2.new(0, 0, 0, 45)
+	TabsContainer.BackgroundTransparency = 1
+	TabsContainer.Parent = Sidebar
+
+	local TabsLayout = Instance.new("UIListLayout")
+	TabsLayout.Padding = UDim.new(0, 5)
+	TabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	TabsLayout.Parent = TabsContainer
+
+	window.MainFrame = MainFrame
+	window.TabsContainer = TabsContainer
+	
+	-- Footer thông báo trạng thái cố định dưới góc trái
+	local BypassLabel = Instance.new("TextLabel")
+	BypassLabel.Size = UDim2.new(0, 150, 0, 20)
+	BypassLabel.Position = UDim2.new(0, 145, 1, -25)
+	BypassLabel.BackgroundTransparency = 1
+	BypassLabel.Text = "Bypass Done"
+	BypassLabel.TextColor3 = Theme.Green
+	BypassLabel.Font = Enum.Font.GothamBold
+	BypassLabel.TextSize = 11
+	BypassLabel.TextXAlignment = Enum.TextXAlignment.Left
+	BypassLabel.Parent = MainFrame
+
+	-- ==========================================
+	-- CHỨC NĂNG TẠO TAB (CreateTab)
+	-- ==========================================
+	function window:CreateTab(tabName)
+		local tab = { Name = tabName }
+		
+		-- Tạo nút Tab
+		local TabBtn = Instance.new("TextButton")
+		TabBtn.Size = UDim2.new(0, 110, 0, 26)
+		TabBtn.Font = Enum.Font.GothamMedium
+		TabBtn.TextSize = 11
+		TabBtn.Text = "  " .. tabName
+		TabBtn.TextXAlignment = Enum.TextXAlignment.Left
+		TabBtn.BackgroundColor3 = Theme.TabInActive
+		TabBtn.TextColor3 = Theme.TextDark
+		TabBtn.Parent = window.TabsContainer
+		
+		local TabCorner = Instance.new("UICorner")
+		TabCorner.CornerRadius = UDim.new(0, 6)
+		TabCorner.Parent = TabBtn
+
+		local TabStroke = Instance.new("UIStroke")
+		TabStroke.Thickness = 1
+		TabStroke.Color = Color3.fromRGB(0,0,0)
+		TabStroke.Parent = TabBtn
+
+		-- Tạo trang nội dung tương ứng của Tab
+		local Page = Instance.new("ScrollingFrame")
+		Page.Size = UDim2.new(1, -150, 1, -70)
+		Page.Position = UDim2.new(0, 138, 0, 40)
+		Page.BackgroundColor3 = Theme.ContentBg
+		Page.BorderSizePixel = 0
+		Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+		Page.ScrollBarThickness = 2
+		Page.ScrollBarImageColor3 = Theme.StrokeInActive
+		Page.Visible = false
+		Page.Parent = window.MainFrame
+
+		local ContentCorner = Instance.new("UICorner")
+		ContentCorner.CornerRadius = UDim.new(0, 10)
+		ContentCorner.Parent = Page
+
+		local ContentGrid = Instance.new("UIGridLayout")
+		ContentGrid.CellSize = UDim2.new(0, 190, 0, 28)
+		ContentGrid.CellPadding = UDim2.new(0, 10, 0, 6)
+		ContentGrid.SortOrder = Enum.SortOrder.LayoutOrder
+		ContentGrid.Parent = Page
+		
+		-- Tự động giãn Canvas Size khi thêm nhiều phần tử
+		ContentGrid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			Page.CanvasSize = UDim2.new(0, 0, 0, ContentGrid.AbsoluteContentSize.Y + 15)
+		end)
+
+		window.Tabs[tabName] = TabBtn
+		window.Pages[tabName] = Page
+
+		-- Hàm kích hoạt Tab
+		local function activate()
+			for name, p in pairs(window.Pages) do p.Visible = (name == tabName) end
+			for name, b in pairs(window.Tabs) do
+				if name == tabName then
+					b.BackgroundColor3 = Theme.TabActive
+					b.TextColor3 = Theme.TextMain
+					b.UIStroke.Color = Theme.StrokeActive
+				else
+					b.BackgroundColor3 = Theme.TabInActive
+					b.TextColor3 = Theme.TextDark
+					b.UIStroke.Color = Color3.fromRGB(0,0,0)
+				end
+			end
+		end
+
+		TabBtn.MouseButton1Click:Connect(activate)
+		if not window.CurrentTab then activate() window.CurrentTab = tabName end
+
+		-- ==========================================
+		-- THÊM TOGGLE (CHECKBOX) VÀO TAB
+		-- ==========================================
+		function tab:AddToggle(text, defaultState, callback)
+			callback = callback or function() end
+			local Container = Instance.new("Frame")
+			Container.BackgroundTransparency = 1
+
+			local Box = Instance.new("TextButton")
+			Box.Size = UDim2.new(0, 14, 0, 14)
+			Box.Position = UDim2.new(0, 10, 0.5, -7)
+			Box.BackgroundColor3 = Theme.MainBg
+			Box.BorderSizePixel = 0
+			Box.Text = defaultState and "✓" or ""
+			Box.TextColor3 = Color3.fromRGB(150, 180, 220)
+			Box.Font = Enum.Font.SourceSansBold
+			Box.TextSize = 12
+			Box.Parent = Container
+
+			local BoxStroke = Instance.new("UIStroke")
+			BoxStroke.Color = defaultState and Theme.StrokeActive or Theme.StrokeInActive
+			BoxStroke.Thickness = 1
+			BoxStroke.Parent = Box
+
+			local BoxCorner = Instance.new("UICorner")
+			BoxCorner.CornerRadius = UDim.new(0, 4)
+			BoxCorner.Parent = Box
+
+			local Label = Instance.new("TextLabel")
+			Label.Size = UDim2.new(1, -32, 1, 0)
+			Label.Position = UDim2.new(0, 32, 0, 0)
+			Label.BackgroundTransparency = 1
+			Label.Text = text
+			Label.TextColor3 = Color3.fromRGB(200, 205, 215)
+			Label.Font = Enum.Font.Gotham
+			Label.TextSize = 11
+			Label.TextXAlignment = Enum.TextXAlignment.Left
+			Label.Parent = Container
+
+			Box.MouseButton1Click:Connect(function()
+				defaultState = not defaultState
+				Box.Text = defaultState and "✓" or ""
+				BoxStroke.Color = defaultState and Theme.StrokeActive or Theme.StrokeInActive
+				pcall(callback, defaultState)
+			end)
+
+			Container.Parent = Page
+		end
+
+		-- ==========================================
+		-- THÊM SLIDER VÀO TAB
+		-- ==========================================
+		function tab:AddSlider(text, min, max, default, callback)
+			callback = callback or function() end
+			local Container = Instance.new("Frame")
+			Container.BackgroundTransparency = 1
+
+			local Label = Instance.new("TextLabel")
+			Label.Size = UDim2.new(0.6, 0, 0, 12)
+			Label.Position = UDim2.new(0, 10, 0, 2)
+			Label.BackgroundTransparency = 1
+			Label.Text = text
+			Label.TextColor3 = Color3.fromRGB(200, 205, 215)
+			Label.Font = Enum.Font.Gotham
+			Label.TextSize = 10.5
+			Label.TextXAlignment = Enum.TextXAlignment.Left
+			Label.Parent = Container
+
+			local ValueLabel = Instance.new("TextLabel")
+			ValueLabel.Size = UDim2.new(0.35, 0, 0, 12)
+			ValueLabel.Position = UDim2.new(0.6, 0, 0, 2)
+			ValueLabel.BackgroundTransparency = 1
+			ValueLabel.Text = tostring(default)
+			ValueLabel.TextColor3 = Theme.StrokeActive
+			ValueLabel.Font = Enum.Font.Code
+			ValueLabel.TextSize = 10.5
+			ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+			ValueLabel.Parent = Container
+
+			local SlideBar = Instance.new("TextButton")
+			SlideBar.Size = UDim2.new(1, -20, 0, 4)
+			SlideBar.Position = UDim2.new(0, 10, 0, 18)
+			SlideBar.BackgroundColor3 = Theme.MainBg
+			SlideBar.BorderSizePixel = 0
+			SlideBar.Text = ""
+			SlideBar.Parent = Container
+
+			local SlideCorner = Instance.new("UICorner")
+			SlideCorner.CornerRadius = UDim.new(0, 2)
+			SlideCorner.Parent = SlideBar
+
+			local Fill = Instance.new("Frame")
+			Fill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+			Fill.BackgroundColor3 = Theme.StrokeActive
+			Fill.BorderSizePixel = 0
+			Fill.Parent = SlideBar
+
+			local FillCorner = Instance.new("UICorner")
+			FillCorner.CornerRadius = UDim.new(0, 2)
+			FillCorner.Parent = Fill
+
+			local function updateSlider(input)
+				local ratio = math.clamp((input.Position.X - SlideBar.AbsolutePosition.X) / SlideBar.AbsoluteSize.X, 0, 1)
+				Fill.Size = UDim2.new(ratio, 0, 1, 0)
+				local finalVal = math.floor(min + (max - min) * ratio)
+				ValueLabel.Text = tostring(finalVal)
+				pcall(callback, finalVal)
+			end
+
+			local sliding = false
+			SlideBar.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					sliding = true
+					updateSlider(input)
+				end
+			end)
+
+			UserInputService.InputChanged:Connect(function(input)
+				if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+					updateSlider(input)
+				end
+			end)
+
+			UserInputService.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					sliding = false
+				end
+			end)
+
+			Container.Parent = Page
+		end
+
+		return tab
+	end
+
+	return window
+end
+
+return DeltaLib
