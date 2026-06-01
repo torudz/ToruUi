@@ -1,7 +1,7 @@
 -- =============================================================================
---  Project: Delta-Styled Premium UI Library 
+--  Project: Delta-Styled Premium UI Library (With Dropdown Feature)
 --  Author: Dtrong dz
---  Inspired by professional Luau UI Frameworks
+--  Version: 1.1.0 (Premium Dropdown Update)
 -- =============================================================================
 
 local Players = game:GetService("Players")
@@ -26,7 +26,7 @@ local Theme = {
     TextMain = Color3.fromRGB(255, 255, 255),
     TextDark = Color3.fromRGB(140, 145, 155),
     Green = Color3.fromRGB(0, 215, 100),
-    Red = Color3.fromRGB(215, 45, 45)
+    DropdownBg = Color3.fromRGB(28, 30, 35)
 }
 
 -- Hàm tạo Tween nhanh
@@ -69,17 +69,16 @@ local NotificationGui = Instance.new("ScreenGui")
 pcall(function() NotificationGui.Parent = gethui and gethui() or LocalPlayer:WaitForChild("PlayerGui") end)
 NotificationGui.Name = "Delta_Notifications"
 
-local NotifLayout = Instance.new("UIListLayout")
-NotifLayout.Padding = UDim.new(0, 8)
-NotifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
-NotifLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-NotifLayout.Parent = NotificationGui
-
 local NotifContainer = Instance.new("Frame")
 NotifContainer.Size = UDim2.new(0, 250, 1, -20)
 NotifContainer.Position = UDim2.new(1, -260, 0, 10)
 NotifContainer.BackgroundTransparency = 1
 NotifContainer.Parent = NotificationGui
+
+local NotifLayout = Instance.new("UIListLayout")
+NotifLayout.Padding = UDim.new(0, 8)
+NotifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+NotifLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 NotifLayout.Parent = NotifContainer
 
 function DeltaLib:Notification(title, text, duration)
@@ -88,15 +87,12 @@ function DeltaLib:Notification(title, text, duration)
     local NotifFrame = Instance.new("Frame")
     NotifFrame.Size = UDim2.new(1, 0, 0, 55)
     NotifFrame.BackgroundColor3 = Theme.MainBg
-    NotifFrame.BackgroundTransparency = 1 -- Tạo hiệu ứng fade in
     NotifFrame.BorderSizePixel = 0
     NotifFrame.Parent = NotifContainer
     
-    local Corner = Instance.new("UICorner", NotifFrame)
-    Corner.CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", NotifFrame).CornerRadius = UDim.new(0, 8)
     local Stroke = Instance.new("UIStroke", NotifFrame)
     Stroke.Color = Theme.StrokeActive
-    Stroke.Thickness = 1
     
     local TTitle = Instance.new("TextLabel", NotifFrame)
     TTitle.Size = UDim2.new(1, -20, 0, 20)
@@ -118,8 +114,6 @@ function DeltaLib:Notification(title, text, duration)
     TText.TextSize = 10
     TText.TextXAlignment = Enum.TextXAlignment.Left
     TText.TextWrapped = true
-
-    tween(NotifFrame, {0.3}, {BackgroundTransparency = 0})
     
     task.delay(duration, function()
         tween(NotifFrame, {0.3}, {BackgroundTransparency = 1})
@@ -158,7 +152,6 @@ function DeltaLib:CreateWindow(cfg)
     
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
-    -- Nút nổi bật tắt nhanh
     local ToggleBtn = Instance.new("TextButton")
     ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
     ToggleBtn.Position = UDim2.new(0, 15, 0.2, 0)
@@ -171,10 +164,8 @@ function DeltaLib:CreateWindow(cfg)
     ToggleBtn.Parent = ScreenGui
     makeDraggable(ToggleBtn, ToggleBtn)
     Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
-    local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
-    ToggleStroke.Color = Theme.StrokeActive
+    Instance.new("UIStroke", ToggleBtn).Color = Theme.StrokeActive
 
-    -- Topbar
     local TopBar = Instance.new("Frame", MainFrame)
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundTransparency = 1
@@ -209,7 +200,6 @@ function DeltaLib:CreateWindow(cfg)
         ToggleBtn.Visible = false
     end)
 
-    -- Sidebar
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.Size = UDim2.new(0, 135, 1, -40)
     Sidebar.Position = UDim2.new(0, 0, 0, 40)
@@ -229,7 +219,7 @@ function DeltaLib:CreateWindow(cfg)
     FpsLabel.Size = UDim2.new(1, -20, 0, 14)
     FpsLabel.Position = UDim2.new(0, 15, 0, 18)
     FpsLabel.BackgroundTransparency = 1
-    FpsLabel.Text = "FPS: 计算中"
+    FpsLabel.Text = "FPS: --"
     FpsLabel.TextColor3 = Theme.TextDark
     FpsLabel.Font = Enum.Font.Gotham
     FpsLabel.TextSize = 10
@@ -244,20 +234,7 @@ function DeltaLib:CreateWindow(cfg)
     TabsContainer.Position = UDim2.new(0, 0, 0, 45)
     TabsContainer.BackgroundTransparency = 1
     
-    local TabsLayout = Instance.new("UIListLayout", TabsContainer)
-    TabsLayout.Padding = UDim.new(0, 5)
-    TabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-    -- Chú thích trạng thái cố định dưới góc trái
-    local StatusLabel = Instance.new("TextLabel", MainFrame)
-    StatusLabel.Size = UDim2.new(0, 150, 0, 20)
-    StatusLabel.Position = UDim2.new(0, 145, 1, -25)
-    StatusLabel.BackgroundTransparency = 1
-    StatusLabel.Text = "Bypass Status: Active"
-    StatusLabel.TextColor3 = Theme.Green
-    StatusLabel.Font = Enum.Font.GothamBold
-    StatusLabel.TextSize = 11
-    StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new("UIListLayout", TabsContainer).Padding = UDim.new(0, 5)
 
     -- ==========================================
     -- HÀM KHỞI TẠO TAB (CreateTab)
@@ -275,7 +252,6 @@ function DeltaLib:CreateWindow(cfg)
         TabBtn.TextColor3 = Theme.TextDark
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
         local TabStroke = Instance.new("UIStroke", TabBtn)
-        TabStroke.Thickness = 1
         TabStroke.Color = Color3.fromRGB(0,0,0)
 
         local Page = Instance.new("ScrollingFrame", MainFrame)
@@ -286,6 +262,7 @@ function DeltaLib:CreateWindow(cfg)
         Page.ScrollBarThickness = 2
         Page.ScrollBarImageColor3 = Theme.StrokeInActive
         Page.Visible = false
+        Page.ClipsDescendants = false -- Để danh sách dropdown xổ ra không bị cắt đứt
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 10)
 
         local ContentGrid = Instance.new("UIGridLayout", Page)
@@ -318,7 +295,7 @@ function DeltaLib:CreateWindow(cfg)
         if not window.CurrentTab then activate() window.CurrentTab = tabName end
 
         -- ==========================================
-        -- THÀNH PHẦN: ADD TOGGLE (BẬT / TẮT)
+        -- THÀNH PHẦN: ADD TOGGLE
         -- ==========================================
         function tab:AddToggle(text, default, callback)
             callback = callback or function() end
@@ -357,7 +334,7 @@ function DeltaLib:CreateWindow(cfg)
         end
 
         -- ==========================================
-        -- THÀNH PHẦN: ADD SLIDER (THANH KÉO)
+        -- THÀNH PHẦN: ADD SLIDER
         -- ==========================================
         function tab:AddSlider(text, min, max, default, callback)
             callback = callback or function() end
@@ -423,7 +400,7 @@ function DeltaLib:CreateWindow(cfg)
         end
 
         -- ==========================================
-        -- THÀNH PHẦN: ADD BUTTON (NÚT BẤM KÍCH HOẠT)
+        -- THÀNH PHẦN: ADD BUTTON
         -- ==========================================
         function tab:AddButton(text, callback)
             callback = callback or function() end
@@ -444,11 +421,117 @@ function DeltaLib:CreateWindow(cfg)
             Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
 
             Btn.MouseButton1Click:Connect(function()
-                -- Tạo hiệu ứng click nhấp nháy màu viền xanh lam mượt
                 BtnStroke.Color = Theme.StrokeActive
                 task.wait(0.1)
                 BtnStroke.Color = Theme.StrokeInActive
                 pcall(callback)
+            end)
+        end
+
+        -- ==========================================
+        -- THÀNH PHẦN MỚI: ADD DROPDOWN (MENU THẢ XUỐNG)
+        -- ==========================================
+        function tab:AddDropdown(text, list, default, callback)
+            list = list or {}
+            callback = callback or function() end
+            local currentSelection = default or list[1] or "None"
+            local isExpanded = false
+
+            local Container = Instance.new("Frame", Page)
+            Container.BackgroundTransparency = 1
+            Container.ZIndex = 5 -- Đảm bảo đè lên các phần tử bên dưới khi xổ ra
+
+            -- Khung bấm chính của Dropdown
+            local DropBtn = Instance.new("TextButton", Container)
+            DropBtn.Size = UDim2.new(1, -20, 1, -4)
+            DropBtn.Position = UDim2.new(0, 10, 0, 2)
+            DropBtn.BackgroundColor3 = Theme.TabInActive
+            DropBtn.Text = "  " .. text .. ": " .. currentSelection
+            DropBtn.TextColor3 = Color3.fromRGB(200, 205, 215)
+            DropBtn.Font = Enum.Font.GothamMedium
+            DropBtn.TextSize = 10.5
+            DropBtn.TextXAlignment = Enum.TextXAlignment.Left
+            
+            local DropStroke = Instance.new("UIStroke", DropBtn)
+            DropStroke.Color = Theme.StrokeInActive
+            Instance.new("UICorner", DropBtn).CornerRadius = UDim.new(0, 6)
+
+            -- Icon mũi tên chỉ trạng thái
+            local Arrow = Instance.new("TextLabel", DropBtn)
+            Arrow.Size = UDim2.new(0, 20, 1, 0)
+            Arrow.Position = UDim2.new(1, -25, 0, 0)
+            Arrow.BackgroundTransparency = 1
+            Arrow.Text = "▼"
+            Arrow.TextColor3 = Theme.TextDark
+            Arrow.Font = Enum.Font.GothamBold
+            Arrow.TextSize = 10
+
+            -- Khung chứa danh sách các tùy chọn (Chỉ hiện khi Click)
+            local DropListFrame = Instance.new("ScrollingFrame", DropBtn)
+            DropListFrame.Size = UDim2.new(1, 0, 0, 0) -- Mặc định ẩn (Chiều cao = 0)
+            DropListFrame.Position = UDim2.new(0, 0, 1, 2)
+            DropListFrame.BackgroundColor3 = Theme.DropdownBg
+            DropListFrame.BorderSizePixel = 0
+            DropListFrame.Visible = false
+            DropListFrame.ZIndex = 10
+            DropListFrame.ScrollBarThickness = 2
+            DropListFrame.ScrollBarImageColor3 = Theme.StrokeActive
+            Instance.new("UICorner", DropListFrame).CornerRadius = UDim.new(0, 6)
+            local ListStroke = Instance.new("UIStroke", DropListFrame)
+            ListStroke.Color = Theme.StrokeActive
+
+            local ListLayout = Instance.new("UIListLayout", DropListFrame)
+            ListLayout.Padding = UDim.new(0, 2)
+
+            -- Render các nút Item vào Dropdown
+            local function refreshList()
+                -- Xóa danh sách cũ tránh trùng lặp
+                for _, item in pairs(DropListFrame:GetChildren()) do
+                    if item:IsA("TextButton") then item:Destroy() end
+                end
+
+                for _, optionName in pairs(list) do
+                    local ItemBtn = Instance.new("TextButton", DropListFrame)
+                    ItemBtn.Size = UDim2.new(1, 0, 0, 22)
+                    ItemBtn.BackgroundColor3 = (optionName == currentSelection) and Theme.TabActive or Color3.fromRGB(0, 0, 0)
+                    ItemBtn.BackgroundTransparency = (optionName == currentSelection) and 0 or 1
+                    ItemBtn.Text = "   " .. tostring(optionName)
+                    ItemBtn.TextColor3 = (optionName == currentSelection) and Theme.TextMain or Theme.TextDark
+                    ItemBtn.Font = Enum.Font.Gotham
+                    ItemBtn.TextSize = 10
+                    ItemBtn.TextXAlignment = Enum.TextXAlignment.Left
+                    ItemBtn.ZIndex = 11
+
+                    ItemBtn.MouseButton1Click:Connect(function()
+                        currentSelection = optionName
+                        DropBtn.Text = "  " .. text .. ": " .. tostring(currentSelection)
+                        isExpanded = false
+                        DropListFrame.Visible = false
+                        DropListFrame.Size = UDim2.new(1, 0, 0, 0)
+                        Arrow.Text = "▼"
+                        pcall(callback, currentSelection)
+                    end)
+                end
+                DropListFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
+            end
+
+            -- Bắt sự kiện đóng/mở menu thả xuống
+            DropBtn.MouseButton1Click:Connect(function()
+                isExpanded = not isExpanded
+                if isExpanded then
+                    refreshList()
+                    DropListFrame.Visible = true
+                    Arrow.Text = "▲"
+                    -- Tính toán chiều cao linh hoạt dựa vào số item (Giới hạn tối đa 4 tầng để tránh tràn màn hình)
+                    local targetHeight = math.min(#list * 24, 96)
+                    tween(DropListFrame, {0.2}, {Size = UDim2.new(1, 0, 0, targetHeight)})
+                else
+                    Arrow.Text = "▼"
+                    local t = tween(DropListFrame, {0.2}, {Size = UDim2.new(1, 0, 0, 0)})
+                    t.Completed:Connect(function()
+                        if not isExpanded then DropListFrame.Visible = false end
+                    end)
+                end
             end)
         end
 
