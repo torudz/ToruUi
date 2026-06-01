@@ -1,5 +1,5 @@
 -- =============================================================================
---  Project: ToruUi (Premium Mobile UI Library) - FIXED LAYOUT
+--  Project: ToruUi (Premium Mobile UI Library) - SIDEBAR PADDING FIXED
 --  Repository: https://raw.githubusercontent.com/torudz/ToruUi/refs/heads/main/ToruUi1
 --  Author: Dtrong dz
 -- =============================================================================
@@ -195,14 +195,18 @@ function ToruUi:CreateWindow(cfg)
         FpsLabel.Text = "FPS: " .. string.format("%.1f", 1 / task.wait())
     end)
 
-    -- ĐÃ FIX: Lùi container chứa Tab xuống thêm để không bị dính vào chữ FPS ở trên
     local TabsContainer = Instance.new("Frame", Sidebar)
-    TabsContainer.Size = UDim2.new(1, 0, 1, -60)
-    TabsContainer.Position = UDim2.new(0, 0, 0, 55) -- Đẩy từ vị trí 45 xuống 55
+    TabsContainer.Size = UDim2.new(1, 0, 1, -45)
+    TabsContainer.Position = UDim2.new(0, 0, 0, 45)
     TabsContainer.BackgroundTransparency = 1
     
     local TabListLayout = Instance.new("UIListLayout", TabsContainer)
-    TabListLayout.Padding = UDim.new(0, 7) -- Tăng khoảng cách giữa các nút Tab (About, Chức năng) lên 7px
+    TabListLayout.Padding = UDim.new(0, 7)
+
+    -- FIX CHÍNH: Thêm UIPadding riêng cho Sidebar Tabs để nút "About" tự lùi xuống mà không đổi cấu trúc Frame
+    local SidebarPadding = Instance.new("UIPadding", TabsContainer)
+    SidebarPadding.PaddingTop = UDim.new(0, 15)   -- Đẩy nút Tab đầu tiên cách xa chữ FPS xuống dưới 15px
+    SidebarPadding.PaddingLeft = UDim.new(0, 15)  -- Căn lề trái 15px cho các nút đều hàng với Tên/FPS
 
     function window:CreateTab(tabName)
         local tab = {}
@@ -221,7 +225,7 @@ function ToruUi:CreateWindow(cfg)
 
         local Page = Instance.new("ScrollingFrame", MainFrame)
         Page.Size = UDim2.new(1, -150, 1, -70)
-        Page.Position = UDim2.new(0, 138, 0, 45) -- Đẩy nhẹ toàn bộ trang nội dung xuống 45
+        Page.Position = UDim2.new(0, 138, 0, 45)
         Page.BackgroundColor3 = Theme.ContentBg
         Page.BorderSizePixel = 0
         Page.ScrollBarThickness = 2
@@ -230,15 +234,14 @@ function ToruUi:CreateWindow(cfg)
         Page.ClipsDescendants = true
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 10)
 
-        -- ĐÃ FIX: Thêm UIPadding để tạo lề bên trong trang nội dung (Không cho dính sát mép trên/mép trái)
         local PagePadding = Instance.new("UIPadding", Page)
-        PagePadding.PaddingTop = UDim.new(0, 10)    -- Lùi từ trên đỉnh xuống 10px cực đẹp
-        PagePadding.PaddingLeft = UDim.new(0, 10)   -- Cách lề trái 10px
-        PagePadding.PaddingRight = UDim.new(0, 10)  -- Cách lề phải 10px
+        PagePadding.PaddingTop = UDim.new(0, 10)
+        PagePadding.PaddingLeft = UDim.new(0, 10)
+        PagePadding.PaddingRight = UDim.new(0, 10)
 
         local ContentGrid = Instance.new("UIGridLayout", Page)
         ContentGrid.CellSize = UDim2.new(0, 190, 0, 32)
-        ContentGrid.CellPadding = UDim2.new(0, 10, 0, 10) -- ĐÃ FIX: Tăng CellPadding Y lên 10px giúp các Paragraph cách đều dòng nhau rõ ràng
+        ContentGrid.CellPadding = UDim2.new(0, 10, 0, 10)
 
         ContentGrid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             Page.CanvasSize = UDim2.new(0, 0, 0, ContentGrid.AbsoluteContentSize.Y + 25)
@@ -483,15 +486,12 @@ function ToruUi:CreateWindow(cfg)
             end)
         end
 
-        -- ==========================================================
-        -- THÀNH PHẦN: ADD PARAGRAPH (CẬP NHẬT KÍCH THƯỚC PHÙ HỢP CỰC ĐẸP)
-        -- ==========================================================
         function tab:AddParagraph(title, content)
             local Container = Instance.new("Frame", Page)
             Container.BackgroundTransparency = 1
 
             local BgFrame = Instance.new("Frame", Container)
-            BgFrame.Size = UDim2.new(1, -10, 1, -2) -- Căn đều tỷ lệ size co giãn
+            BgFrame.Size = UDim2.new(1, -10, 1, -2)
             BgFrame.Position = UDim2.new(0, 5, 0, 1)
             BgFrame.BackgroundColor3 = Theme.TabInActive
             Instance.new("UICorner", BgFrame).CornerRadius = UDim.new(0, 6)
