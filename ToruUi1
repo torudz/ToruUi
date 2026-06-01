@@ -1,7 +1,8 @@
 -- =============================================================================
---  Project: Delta-Styled Premium UI Library (With Dropdown Feature)
+--  Project: ToruUi (Premium Mobile UI Library)
+--  Repository: https://raw.githubusercontent.com/torudz/ToruUi/refs/heads/main/ToruUi1
 --  Author: Dtrong dz
---  Version: 1.1.0 (Premium Dropdown Update)
+--  Features: Tabs, Toggle, Slider, Button, Dropdown, Paragraph & Live Resizing!
 -- =============================================================================
 
 local Players = game:GetService("Players")
@@ -10,12 +11,11 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
-local DeltaLib = {
+local ToruUi = {
     Elements = {},
     Signals = {}
 }
 
--- Bảng màu chuẩn Delta Console phẳng, hiện đại
 local Theme = {
     MainBg = Color3.fromRGB(33, 35, 41),
     ContentBg = Color3.fromRGB(22, 23, 27),
@@ -29,14 +29,13 @@ local Theme = {
     DropdownBg = Color3.fromRGB(28, 30, 35)
 }
 
--- Hàm tạo Tween nhanh
 local function tween(object, info, properties)
     local t = TweenService:Create(object, TweenInfo.new(unpack(info)), properties)
     t:Play()
     return t
 end
 
--- Hàm Draggable tối ưu chống giật lag trên Mobile
+-- Hệ thống kéo thả Menu (Draggable)
 local function makeDraggable(topBar, mainFrame)
     local dragging, dragInput, dragStart, startPos
     topBar.InputBegan:Connect(function(input)
@@ -63,74 +62,38 @@ local function makeDraggable(topBar, mainFrame)
 end
 
 -- ==========================================
--- KHỞI TẠO HỆ THỐNG THÔNG BÁO (NOTIFICATIONS)
+-- HỆ THỐNG ĐỔI KÍCH THƯỚC MENU (RESIZE SYSTEM)
 -- ==========================================
-local NotificationGui = Instance.new("ScreenGui")
-pcall(function() NotificationGui.Parent = gethui and gethui() or LocalPlayer:WaitForChild("PlayerGui") end)
-NotificationGui.Name = "Delta_Notifications"
-
-local NotifContainer = Instance.new("Frame")
-NotifContainer.Size = UDim2.new(0, 250, 1, -20)
-NotifContainer.Position = UDim2.new(1, -260, 0, 10)
-NotifContainer.BackgroundTransparency = 1
-NotifContainer.Parent = NotificationGui
-
-local NotifLayout = Instance.new("UIListLayout")
-NotifLayout.Padding = UDim.new(0, 8)
-NotifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
-NotifLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-NotifLayout.Parent = NotifContainer
-
-function DeltaLib:Notification(title, text, duration)
-    duration = duration or 3
-    
-    local NotifFrame = Instance.new("Frame")
-    NotifFrame.Size = UDim2.new(1, 0, 0, 55)
-    NotifFrame.BackgroundColor3 = Theme.MainBg
-    NotifFrame.BorderSizePixel = 0
-    NotifFrame.Parent = NotifContainer
-    
-    Instance.new("UICorner", NotifFrame).CornerRadius = UDim.new(0, 8)
-    local Stroke = Instance.new("UIStroke", NotifFrame)
-    Stroke.Color = Theme.StrokeActive
-    
-    local TTitle = Instance.new("TextLabel", NotifFrame)
-    TTitle.Size = UDim2.new(1, -20, 0, 20)
-    TTitle.Position = UDim2.new(0, 10, 0, 5)
-    TTitle.BackgroundTransparency = 1
-    TTitle.Text = title
-    TTitle.TextColor3 = Theme.TextMain
-    TTitle.Font = Enum.Font.GothamBold
-    TTitle.TextSize = 12
-    TTitle.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local TText = Instance.new("TextLabel", NotifFrame)
-    TText.Size = UDim2.new(1, -20, 0, 25)
-    TText.Position = UDim2.new(0, 10, 0, 22)
-    TText.BackgroundTransparency = 1
-    TText.Text = text
-    TText.TextColor3 = Theme.TextDark
-    TText.Font = Enum.Font.Gotham
-    TText.TextSize = 10
-    TText.TextXAlignment = Enum.TextXAlignment.Left
-    TText.TextWrapped = true
-    
-    task.delay(duration, function()
-        tween(NotifFrame, {0.3}, {BackgroundTransparency = 1})
-        tween(TTitle, {0.3}, {TextTransparency = 1})
-        tween(TText, {0.3}, {TextTransparency = 1})
-        task.wait(0.3)
-        NotifFrame:Destroy()
+local function makeResizable(resizeBtn, mainFrame)
+    local resizing, resizeStart, startSize
+    resizeBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            resizeStart = input.Position
+            startSize = mainFrame.Size
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then resizing = false end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - resizeStart
+            -- Giới hạn kích thước tối thiểu (Min: 450x250) và tối đa (Max: 800x500) để không vỡ giao diện
+            local newWidth = math.clamp(startSize.X.Offset + delta.X, 450, 800)
+            local newHeight = math.clamp(startSize.Y.Offset + delta.Y, 250, 500)
+            mainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
     end)
 end
 
 -- ==========================================
 -- TẠO CỬA SỔ CHÍNH (CreateWindow)
 -- ==========================================
-function DeltaLib:CreateWindow(cfg)
+function ToruUi:CreateWindow(cfg)
     cfg = cfg or {}
-    local projectTitle = cfg.Title or "Premium Menu"
-    local authorName = cfg.Author or "Developer"
+    local projectTitle = cfg.Title or "ToruUi Menu"
+    local authorName = cfg.Author or "Dtrong dz"
     
     local window = {
         CurrentTab = nil,
@@ -140,7 +103,7 @@ function DeltaLib:CreateWindow(cfg)
     
     local ScreenGui = Instance.new("ScreenGui")
     pcall(function() ScreenGui.Parent = gethui and gethui() or LocalPlayer:WaitForChild("PlayerGui") end)
-    ScreenGui.Name = "DeltaMain_" .. math.random(1111, 9999)
+    ScreenGui.Name = "ToruUi_" .. math.random(1111, 9999)
     ScreenGui.ResetOnSpawn = false
 
     local MainFrame = Instance.new("Frame")
@@ -148,15 +111,29 @@ function DeltaLib:CreateWindow(cfg)
     MainFrame.Position = UDim2.new(0.5, -290, 0.5, -160)
     MainFrame.BackgroundColor3 = Theme.MainBg
     MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
     
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
+    -- Nút Resize đặt ở góc dưới cùng bên phải Menu
+    local ResizeBtn = Instance.new("TextButton", MainFrame)
+    ResizeBtn.Size = UDim2.new(0, 15, 0, 15)
+    ResizeBtn.Position = UDim2.new(1, -15, 1, -15)
+    ResizeBtn.BackgroundTransparency = 1
+    ResizeBtn.Text = "◢"
+    ResizeBtn.TextColor3 = Theme.TextDark
+    ResizeBtn.Font = Enum.Font.GothamBold
+    ResizeBtn.TextSize = 10
+    ResizeBtn.ZIndex = 20
+    makeResizable(ResizeBtn, MainFrame)
+
+    -- Nút nổi bật tắt nhanh
     local ToggleBtn = Instance.new("TextButton")
     ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
     ToggleBtn.Position = UDim2.new(0, 15, 0.2, 0)
     ToggleBtn.BackgroundColor3 = Theme.TabActive
-    ToggleBtn.Text = "Menu"
+    ToggleBtn.Text = "Toru"
     ToggleBtn.TextColor3 = Theme.TextMain
     ToggleBtn.Font = Enum.Font.GothamBold
     ToggleBtn.TextSize = 11
@@ -166,6 +143,7 @@ function DeltaLib:CreateWindow(cfg)
     Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
     Instance.new("UIStroke", ToggleBtn).Color = Theme.StrokeActive
 
+    -- Topbar
     local TopBar = Instance.new("Frame", MainFrame)
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundTransparency = 1
@@ -200,6 +178,7 @@ function DeltaLib:CreateWindow(cfg)
         ToggleBtn.Visible = false
     end)
 
+    -- Sidebar
     local Sidebar = Instance.new("Frame", MainFrame)
     Sidebar.Size = UDim2.new(0, 135, 1, -40)
     Sidebar.Position = UDim2.new(0, 0, 0, 40)
@@ -255,6 +234,7 @@ function DeltaLib:CreateWindow(cfg)
         TabStroke.Color = Color3.fromRGB(0,0,0)
 
         local Page = Instance.new("ScrollingFrame", MainFrame)
+        -- Tối ưu hóa kích thước động Scale để co giãn chuẩn theo MainFrame khi Resize
         Page.Size = UDim2.new(1, -150, 1, -70)
         Page.Position = UDim2.new(0, 138, 0, 40)
         Page.BackgroundColor3 = Theme.ContentBg
@@ -262,7 +242,7 @@ function DeltaLib:CreateWindow(cfg)
         Page.ScrollBarThickness = 2
         Page.ScrollBarImageColor3 = Theme.StrokeInActive
         Page.Visible = false
-        Page.ClipsDescendants = false -- Để danh sách dropdown xổ ra không bị cắt đứt
+        Page.ClipsDescendants = false
         Instance.new("UICorner", Page).CornerRadius = UDim.new(0, 10)
 
         local ContentGrid = Instance.new("UIGridLayout", Page)
@@ -273,8 +253,8 @@ function DeltaLib:CreateWindow(cfg)
             Page.CanvasSize = UDim2.new(0, 0, 0, ContentGrid.AbsoluteContentSize.Y + 15)
         end)
 
-        window.Tabs[tabName] = TabBtn
         window.Pages[tabName] = Page
+        window.Tabs[tabName] = TabBtn
 
         local function activate()
             for name, p in pairs(window.Pages) do p.Visible = (name == tabName) end
@@ -429,7 +409,7 @@ function DeltaLib:CreateWindow(cfg)
         end
 
         -- ==========================================
-        -- THÀNH PHẦN MỚI: ADD DROPDOWN (MENU THẢ XUỐNG)
+        -- THÀNH PHẦN: ADD DROPDOWN
         -- ==========================================
         function tab:AddDropdown(text, list, default, callback)
             list = list or {}
@@ -439,9 +419,8 @@ function DeltaLib:CreateWindow(cfg)
 
             local Container = Instance.new("Frame", Page)
             Container.BackgroundTransparency = 1
-            Container.ZIndex = 5 -- Đảm bảo đè lên các phần tử bên dưới khi xổ ra
+            Container.ZIndex = 5
 
-            -- Khung bấm chính của Dropdown
             local DropBtn = Instance.new("TextButton", Container)
             DropBtn.Size = UDim2.new(1, -20, 1, -4)
             DropBtn.Position = UDim2.new(0, 10, 0, 2)
@@ -456,7 +435,6 @@ function DeltaLib:CreateWindow(cfg)
             DropStroke.Color = Theme.StrokeInActive
             Instance.new("UICorner", DropBtn).CornerRadius = UDim.new(0, 6)
 
-            -- Icon mũi tên chỉ trạng thái
             local Arrow = Instance.new("TextLabel", DropBtn)
             Arrow.Size = UDim2.new(0, 20, 1, 0)
             Arrow.Position = UDim2.new(1, -25, 0, 0)
@@ -466,9 +444,8 @@ function DeltaLib:CreateWindow(cfg)
             Arrow.Font = Enum.Font.GothamBold
             Arrow.TextSize = 10
 
-            -- Khung chứa danh sách các tùy chọn (Chỉ hiện khi Click)
             local DropListFrame = Instance.new("ScrollingFrame", DropBtn)
-            DropListFrame.Size = UDim2.new(1, 0, 0, 0) -- Mặc định ẩn (Chiều cao = 0)
+            DropListFrame.Size = UDim2.new(1, 0, 0, 0)
             DropListFrame.Position = UDim2.new(0, 0, 1, 2)
             DropListFrame.BackgroundColor3 = Theme.DropdownBg
             DropListFrame.BorderSizePixel = 0
@@ -477,19 +454,15 @@ function DeltaLib:CreateWindow(cfg)
             DropListFrame.ScrollBarThickness = 2
             DropListFrame.ScrollBarImageColor3 = Theme.StrokeActive
             Instance.new("UICorner", DropListFrame).CornerRadius = UDim.new(0, 6)
-            local ListStroke = Instance.new("UIStroke", DropListFrame)
-            ListStroke.Color = Theme.StrokeActive
+            Instance.new("UIStroke", DropListFrame).Color = Theme.StrokeActive
 
             local ListLayout = Instance.new("UIListLayout", DropListFrame)
             ListLayout.Padding = UDim.new(0, 2)
 
-            -- Render các nút Item vào Dropdown
             local function refreshList()
-                -- Xóa danh sách cũ tránh trùng lặp
                 for _, item in pairs(DropListFrame:GetChildren()) do
                     if item:IsA("TextButton") then item:Destroy() end
                 end
-
                 for _, optionName in pairs(list) do
                     local ItemBtn = Instance.new("TextButton", DropListFrame)
                     ItemBtn.Size = UDim2.new(1, 0, 0, 22)
@@ -515,25 +488,83 @@ function DeltaLib:CreateWindow(cfg)
                 DropListFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
             end
 
-            -- Bắt sự kiện đóng/mở menu thả xuống
             DropBtn.MouseButton1Click:Connect(function()
                 isExpanded = not isExpanded
                 if isExpanded then
                     refreshList()
                     DropListFrame.Visible = true
                     Arrow.Text = "▲"
-                    -- Tính toán chiều cao linh hoạt dựa vào số item (Giới hạn tối đa 4 tầng để tránh tràn màn hình)
                     local targetHeight = math.min(#list * 24, 96)
                     tween(DropListFrame, {0.2}, {Size = UDim2.new(1, 0, 0, targetHeight)})
                 else
                     Arrow.Text = "▼"
                     local t = tween(DropListFrame, {0.2}, {Size = UDim2.new(1, 0, 0, 0)})
-                    t.Completed:Connect(function()
-                        if not isExpanded then DropListFrame.Visible = false end
-                    end)
+                    t.Completed:Connect(function() if not isExpanded then DropListFrame.Visible = false end end)
                 end
             end)
         end
+
+        -- ==========================================
+        -- THÀNH PHẦN: ADD PARAGRAPH (KHUNG VĂN BẢN CHÚ THÍCH)
+        -- ==========================================
+        function tab:AddParagraph(title, content)
+            local Container = Instance.new("Frame", Page)
+            Container.BackgroundTransparency = 1
+
+            local BgFrame = Instance.new("Frame", Container)
+            BgFrame.Size = UDim2.new(1, -20, 1, -4)
+            BgFrame.Position = UDim2.new(0, 10, 0, 2)
+            BgFrame.BackgroundColor3 = Theme.TabInActive
+            Instance.new("UICorner", BgFrame).CornerRadius = UDim.new(0, 6)
+            local Stroke = Instance.new("UIStroke", BgFrame)
+            Stroke.Color = Theme.StrokeInActive
+
+            local PTitle = Instance.new("TextLabel", BgFrame)
+            PTitle.Size = UDim2.new(1, -10, 0, 12)
+            PTitle.Position = UDim2.new(0, 8, 0, 2)
+            PTitle.BackgroundTransparency = 1
+            PTitle.Text = title or "Paragraph Title"
+            PTitle.TextColor3 = Theme.TextMain
+            PTitle.Font = Enum.Font.GothamBold
+            PTitle.TextSize = 10
+            PTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+            local PContent = Instance.new("TextLabel", BgFrame)
+            PContent.Size = UDim2.new(1, -10, 1, -14)
+            PContent.Position = UDim2.new(0, 8, 0, 12)
+            PContent.BackgroundTransparency = 1
+            PContent.Text = content or "Paragraph Content"
+            PContent.TextColor3 = Theme.TextDark
+            PContent.Font = Enum.Font.Gotham
+            PContent.TextSize = 9
+            PContent.TextXAlignment = Enum.TextXAlignment.Left
+            PContent.TextYAlignment = Enum.TextYAlignment.Top
+            PContent.TextWrapped = true
+        end
+
+        ------------------------------------------------------------------------
+        -- CODE KÝ SỰ: HƯỚNG DẪN ÔNG TỰ THÊM PHẦN TỬ MỚI (VÍ DỤ: ADDLABEL)
+        ------------------------------------------------------------------------
+        -- Muốn tạo thêm Element mới nào, ông chỉ cần copy cấu trúc hàm mẫu dưới này:
+        --[[
+        function tab:AddLabel(text)
+            -- 1. Tạo Frame Container để Grid xếp vị trí tự động
+            local Container = Instance.new("Frame", Page)
+            Container.BackgroundTransparency = 1
+
+            -- 2. Tạo Đối tượng hiển thị (TextLabel, ImageLabel, ...)
+            local Label = Instance.new("TextLabel", Container)
+            Label.Size = UDim2.new(1, -20, 1, 0)
+            Label.Position = UDim2.new(0, 10, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Theme.TextMain
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 11
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+        end
+        --]]
+        ------------------------------------------------------------------------
 
         return tab
     end
@@ -541,4 +572,4 @@ function DeltaLib:CreateWindow(cfg)
     return window
 end
 
-return DeltaLib
+return ToruUi
